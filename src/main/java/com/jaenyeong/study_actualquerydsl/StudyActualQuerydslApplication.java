@@ -1,4 +1,4 @@
-package com.example.study_actualquerydsl;
+package com.jaenyeong.study_actualquerydsl;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

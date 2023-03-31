@@ -1,4 +1,4 @@
-package com.example.study_actualquerydsl;
+package com.jaenyeong.study_actualquerydsl;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
