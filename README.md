@@ -45,3 +45,28 @@ https://www.inflearn.com/course/querydsl-%EC%8B%A4%EC%A0%84/dashboard
   * `brew services start h2`
   * 재시작 시 JDBC URL은 `jdbc:h2:tcp://localhost/~/querydsl`으로 설정하여 접속
     * 기존 파일 모드로 실행하면 락이 걸리기 때문에 tcp를 통해 접속
+
+### `application.yml` 파일 설정
+* 확장자를 `.properties`에서 `.yml`로 변경
+* 데이터소스 설정
+  ```yaml
+  spring:
+    datasource:
+      url: jdbc:h2:tcp://localhost/~/querydsl
+      username: sa
+      password:
+      driver-class-name: org.h2.Driver
+  
+    jpa:
+      hibernate:
+        ddl-auto: create
+      properties:
+        hibernate:
+          show_sql: true
+          format_sql: true
+  
+  logging.level:
+    org.hibernate.SQL: debug
+    org.hibernate.type: trace
+  ```
+* `StudyActualQuerydslApplicationTests` 파일에 `@Commit` 애너테이션 태깅
