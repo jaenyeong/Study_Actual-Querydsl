@@ -26,3 +26,22 @@ https://www.inflearn.com/course/querydsl-%EC%8B%A4%EC%A0%84/dashboard
   * 롬복 플러그인 사용을 위해 애너테이션 설정
   * `Build, Execution, Deployment` > `Compiler` > `Annotation Processors` 경로
     * `Enable annotation processing` 설정 선택
+
+### H2 설정
+* 설치
+  * `brew install h2`
+* 최초 접속 설정
+  * 터미널에서 `h2 web` 명령을 통해 출력되는 URL을 브라우저로 복사하여 접속
+    * `http://218.38.137.28:8082?key=bb92fef093e10753eeddc14add3b45805ce8d040b3f6b1de506059dca24bb239`
+    * 접속이 안되는 경우 host 부분을 `localhost`로 변경하여 실행해볼 것
+  * 브라우저에서 아래 설정 입력 후 접속(`connection`)
+    * 설정명 : `Generic H2 (Embedded)` (또는 `Generic H2 (Server)`)
+    * JDBC URL: `jdbc:h2:~/querydsl` (이렇게 접속할 경우 원격이 아닌 파일로 접속하게 됨)
+  * 위와 같이 하지 않는 경우 에러 발생
+    * `Database "/Users/jaenyeong/querydsl" not found, either pre-create it or allow remote database creation (not recommended in secure environments) [90149-214] 90149/90149`
+* 설정 완료 확인
+  * root 경로에 `querydsl.mv.db` 파일 생성 여부 확인
+* H2 종료 후 재시작
+  * `brew services start h2`
+  * 재시작 시 JDBC URL은 `jdbc:h2:tcp://localhost/~/querydsl`으로 설정하여 접속
+    * 기존 파일 모드로 실행하면 락이 걸리기 때문에 tcp를 통해 접속
