@@ -78,3 +78,12 @@ https://www.inflearn.com/course/querydsl-%EC%8B%A4%EC%A0%84/dashboard
 에러 메시지 : `Attempt to recreate a file for type com.jaenyeong.study_actualquerydsl.entity.QTeam`
 * 일반적으로 이미 생성되어 있는 경우에 재 생성 실패로 발생하는 에러
 * gradle의 `build` > `clean`을 실행 후에 다시 생성 시도
+---
+
+## QueryDSL
+
+### JPAQueryFactory
+QueryDSL에서 쿼리를 생성 시 사용하는 객체로 `EntityManager`를 파라미터로 받음
+* 멀티 스레드 환경에서도 동시성 문제 없이 사용할 수 있음
+  * 스프링에서 `EntityManager`를 스레드 당 하나의 인스턴스를 사용하도록 관리하기 때문
+  * 하지만 원래 `EntityManager` 자체는 스레드 세이프하지 않음
