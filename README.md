@@ -70,3 +70,11 @@ https://www.inflearn.com/course/querydsl-%EC%8B%A4%EC%A0%84/dashboard
     org.hibernate.type: trace
   ```
 * `StudyActualQuerydslApplicationTests` 파일에 `@Commit` 애너테이션 태깅
+
+## QClass 생성(컴파일)
+* gradle의 `other` > `compileQuerydsl`을 실행하여 JPA Entity에 대한 QClass 생성
+
+### QClass 생성 에러 발생
+에러 메시지 : `Attempt to recreate a file for type com.jaenyeong.study_actualquerydsl.entity.QTeam`
+* 일반적으로 이미 생성되어 있는 경우에 재 생성 실패로 발생하는 에러
+* gradle의 `build` > `clean`을 실행 후에 다시 생성 시도
