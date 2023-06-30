@@ -247,3 +247,38 @@ assertThat(teamA.get(member.age.avg())).isEqualTo(21.5);
 assertThat(teamB.get(team.name)).isEqualTo("Team B");
 assertThat(teamB.get(member.age.avg())).isEqualTo(23.5);
 ```
+
+### 조인
+* `join()`, `innerJoin()`
+  * 내부 조인(inner join)
+* `leftJoin()`
+  * left 외부 조인(left outer join)
+* `rightJoin()`
+  * right 외부 조인(right outer join)
+
+```
+final List<Member> members = queryFactory
+    .selectFrom(member)
+    .join(member.team, team)
+    .where(team.name.eq("Team A"))
+    .fetch();
+
+assertThat(members).extracting("username").containsExactly("member1", "member2");
+```
+
+### 세타 조인
+* 연관관계가 없는 필드로 조인
+
+```
+em.persist(new Member("Team A"));
+em.persist(new Member("Team B"));
+em.persist(new Member("Team C"));
+
+final List<Member> members = queryFactory
+    .select(member)
+    .from(member, team)
+    .where(member.username.eq(team.name))
+    .fetch();
+
+assertThat(members).extracting("username").containsExactly("Team A", "Team B");
+```
