@@ -125,3 +125,32 @@ member.username.like("member%") // like 검색
 member.username.contains("member") // like ‘%member%’ 검색
 member.username.startsWith("member") //like ‘member%’ 검색
 ```
+
+### 결과 조회
+* `fetch()`
+  * 리스트 조회 (데이터가 없다면 빈 리스트 반환)
+* `fetchOne()`
+  * 단 건 조회 (결과가 없으면 null, 여러 건이면 `com.querydsl.core.NonUniqueResultException`)
+* `fetchFirst()`
+  * `limit(1).fetchOne()`과 같음
+* `fetchResults()`
+  * 페이징 정보를 포함, `total count` 쿼리 추가 실행
+* `fetchCount()`
+  * `count` 쿼리로 변경해서 `count` 결과 조회
+
+```
+queryFactory.selectFrom(member).fetch();
+queryFactory.selectFrom(member).fetchOne();
+
+// limit(1).fetchOne() == fetchFirst()
+queryFactory.selectFrom(member).limit(1).fetchOne();
+queryFactory.selectFrom(member).fetchFirst();
+
+// deprecated
+// queryFactory.selectFrom(member).fetchResults();
+// queryFactory.selectFrom(member).fetchCount();
+```
+
+* `fetchResults()`, `fetchCount()
+  * 복잡한 쿼리에서는 제대로 동작하지 않을 수 있음
+  * [persistence.blazebit 참조](https://persistence.blazebit.com/documentation/1.5/core/manual/en_US/index.html#querydsl-integration)
