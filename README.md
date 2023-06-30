@@ -154,3 +154,30 @@ queryFactory.selectFrom(member).fetchFirst();
 * `fetchResults()`, `fetchCount()
   * 복잡한 쿼리에서는 제대로 동작하지 않을 수 있음
   * [persistence.blazebit 참조](https://persistence.blazebit.com/documentation/1.5/core/manual/en_US/index.html#querydsl-integration)
+
+### 정렬
+* `desc()`, `asc()` 일반 정렬
+* `nullsLast()`, `nullsFirst()` null 데이터 순서 부여
+
+```
+em.persist(new Member(null, 100));
+em.persist(new Member("member5", 100));
+em.persist(new Member("member6", 100));
+
+final List<Member> members = queryFactory
+    .selectFrom(member)
+    .where(member.age.eq(100))
+    .orderBy(
+        member.age.desc(),
+        member.username.asc().nullsLast()
+    )
+    .fetch();
+
+final Member member5 = members.get(0);
+final Member member6 = members.get(1);
+final Member memberNull = members.get(2);
+
+assertThat(member5.getUsername()).isEqualTo("member5");
+assertThat(member6.getUsername()).isEqualTo("member6");
+assertThat(memberNull.getUsername()).isNull();
+```
