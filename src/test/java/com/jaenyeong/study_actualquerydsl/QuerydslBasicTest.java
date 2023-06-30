@@ -87,4 +87,21 @@ public class QuerydslBasicTest {
         assertThat(foundedMember).isNotNull();
         assertThat(foundedMember.getUsername()).isEqualTo(givenMemberName);
     }
+
+    @Test
+    void searchWithParam() {
+        final String givenMemberName = "member1";
+
+        // search 테스트 메서드와 동일한 쿼리
+        // 파라미터가 null인 경우 무시하기 때문에 편리하게 동적 쿼리 생성 가능
+        final Member foundedMember = queryFactory
+            .selectFrom(member)
+            .where(
+                member.username.eq(givenMemberName),
+                member.age.eq(21)
+            ).fetchOne();
+
+        assertThat(foundedMember).isNotNull();
+        assertThat(foundedMember.getUsername()).isEqualTo(givenMemberName);
+    }
 }
