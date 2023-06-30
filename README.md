@@ -282,3 +282,81 @@ final List<Member> members = queryFactory
 
 assertThat(members).extracting("username").containsExactly("Team A", "Team B");
 ```
+
+### 조인 필터링
+* `on` 절은 `outer join`과 함께 사용할 때와는 다르게 `inner join`과 함께 사용하면 `where` 절에 사용한 것과 동일
+
+```
+final List<Tuple> leftJoinOnResults = queryFactory
+    .select(member, team)
+    .from(member)
+    .leftJoin(member.team, team)
+    .on(team.name.eq("Team A"))
+    .fetch();
+
+final Member member1 = leftJoinOnResults.get(0).get(member);
+final Member member2 = leftJoinOnResults.get(1).get(member);
+final Member member3 = leftJoinOnResults.get(2).get(member);
+final Member member4 = leftJoinOnResults.get(3).get(member);
+
+final Team teamA = leftJoinOnResults.get(0).get(team);
+final Team teamB = leftJoinOnResults.get(2).get(team);
+
+assertThat(member1).isNotNull();
+assertThat(member1.getUsername()).isEqualTo("member1");
+assertThat(member2).isNotNull();
+assertThat(member2.getUsername()).isEqualTo("member2");
+assertThat(member3).isNotNull();
+assertThat(member3.getUsername()).isEqualTo("member3");
+assertThat(member4).isNotNull();
+assertThat(member4.getUsername()).isEqualTo("member4");
+
+assertThat(teamA).isNotNull();
+assertThat(teamA.getName()).isEqualTo("Team A");
+assertThat(teamB).isNull();
+```
+
+### 연관관계가 없는 엔티티 아우터 조인
+* 하이버네이트 5.1부터 서로 관계가 없는 필드로 외부 조인하는 기능이 추가됨
+* `leftJoin()`은 엔티티 하나만 들어감
+  * 일반 조인 : `leftJoin(member.team, team)`
+  * on 조인 : `from(member).leftJoin(team).on(member.username.eq(team.name))`
+
+```
+em.persist(new Member("Team A"));
+em.persist(new Member("Team B"));
+em.persist(new Member("Team C"));
+
+final List<Tuple> queryResults = queryFactory
+    .select(member, team)
+    .from(member)
+    .leftJoin(team)
+    .on(member.username.eq(team.name))
+    .fetch();
+
+final Tuple tuple4 = queryResults.get(4);
+final Tuple tuple5 = queryResults.get(5);
+final Tuple tuple6 = queryResults.get(6);
+
+final Member teamAMember = tuple4.get(member);
+final Member teamBMember = tuple5.get(member);
+final Member teamCMember = tuple6.get(member);
+
+final Team teamA = tuple4.get(team);
+final Team teamB = tuple5.get(team);
+final Team nullTeam = tuple6.get(team);
+
+assertThat(teamAMember).isNotNull();
+assertThat(teamBMember).isNotNull();
+assertThat(teamCMember).isNotNull();
+assertThat(teamA).isNotNull();
+assertThat(teamB).isNotNull();
+assertThat(nullTeam).isNull();
+
+assertThat(teamAMember.getUsername()).isEqualTo("Team A");
+assertThat(teamBMember.getUsername()).isEqualTo("Team B");
+assertThat(teamCMember.getUsername()).isEqualTo("Team C");
+
+assertThat(teamA.getName()).isEqualTo("Team A");
+assertThat(teamB.getName()).isEqualTo("Team B");
+```
