@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static com.jaenyeong.study_actualquerydsl.entity.QMember.member;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -103,5 +105,27 @@ public class QuerydslBasicTest {
 
         assertThat(foundedMember).isNotNull();
         assertThat(foundedMember.getUsername()).isEqualTo(givenMemberName);
+    }
+
+    @Test
+    void resultFetch() {
+        final List<Member> fetchMembers = queryFactory.selectFrom(member).fetch();
+        // `com.querydsl.core.NonUniqueResultException` 예외 발생
+//        final Member fetchOneMember = queryFactory.selectFrom(member).fetchOne();
+
+        // limit(1).fetchOne() == fetchFirst()
+        final Member limitFetchFirstMember = queryFactory.selectFrom(member).limit(1).fetchOne();
+        final Member fetchFirstMember = queryFactory.selectFrom(member).fetchFirst();
+
+        // fetchResults()는 deprecated
+//        final QueryResults<Member> fetchResultsMember = queryFactory.selectFrom(member).fetchResults();
+//        final List<Member> fetchResultsMembers = fetchResultsMember.getResults();
+//        final long total = fetchResultsMember.getTotal();
+
+        // fetchCount()는 deprecated
+//        final long fetchCountResult = queryFactory.selectFrom(member).fetchCount();
+
+        assertThat(fetchMembers).isNotEmpty();
+        assertThat(limitFetchFirstMember).isEqualTo(fetchFirstMember);
     }
 }
