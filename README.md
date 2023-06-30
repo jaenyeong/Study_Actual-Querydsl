@@ -96,3 +96,32 @@ QueryDSL에서 쿼리를 생성 시 사용하는 객체로 `EntityManager`를 �
 사용 방법
 * 직접 별칭 지정 `QMember qMember = new QMember("qMember");`
 * 기본 인스턴스 사용 `QMember qMember = QMember.member;`
+
+### 검색 조건
+JPQL이 제공하는 모든 검색 조건 제공
+* `.and()`, `or()`를 체이닝할 수 있음
+* `select`, `from`을 `selectFrom`으로 대체해 사용 가능
+* `where()` 파라미터로 추가할 시 `and` 조건이 추가됨
+  * 이때 `null` 값인 파라미터는 무시되어 동적 쿼리를 편하게 생성할 수 있음
+
+```
+member.username.eq("member1") // username = 'member1'
+member.username.ne("member1") //username != 'member1'
+member.username.eq("member1").not() // username != 'member1'
+
+member.username.isNotNull() // username is not null
+
+member.age.in(10, 20) // age in (10,20)
+member.age.notIn(10, 20) // age not in (10, 20)
+member.age.between(10,30) //between 10, 30
+
+member.age.goe(30) // age >= 30
+
+member.age.gt(30) // age > 30
+member.age.loe(30) // age <= 30
+member.age.lt(30) // age < 30
+
+member.username.like("member%") // like 검색
+member.username.contains("member") // like ‘%member%’ 검색
+member.username.startsWith("member") //like ‘member%’ 검색
+```
