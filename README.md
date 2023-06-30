@@ -62,8 +62,12 @@ https://www.inflearn.com/course/querydsl-%EC%8B%A4%EC%A0%84/dashboard
         ddl-auto: create
       properties:
         hibernate:
-          show_sql: true
+          # 실행되는 모든 쿼리를 콘솔에 출력
+  #        show_sql: true
+          # 콘솔에 출력되는 쿼리에 포매팅을 가독성 좋게 변경
           format_sql: true
+          # SQL 쿼리에 대한 정보를 주석으로 확인
+          use_sql_comments: true
   
   logging.level:
     org.hibernate.SQL: debug
@@ -87,3 +91,8 @@ QueryDSL에서 쿼리를 생성 시 사용하는 객체로 `EntityManager`를 �
 * 멀티 스레드 환경에서도 동시성 문제 없이 사용할 수 있음
   * 스프링에서 `EntityManager`를 스레드 당 하나의 인스턴스를 사용하도록 관리하기 때문
   * 하지만 원래 `EntityManager` 자체는 스레드 세이프하지 않음
+
+### Q-Type
+사용 방법
+* 직접 별칭 지정 `QMember qMember = new QMember("qMember");`
+* 기본 인스턴스 사용 `QMember qMember = QMember.member;`
