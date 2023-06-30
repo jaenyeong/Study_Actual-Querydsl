@@ -181,3 +181,18 @@ assertThat(member5.getUsername()).isEqualTo("member5");
 assertThat(member6.getUsername()).isEqualTo("member6");
 assertThat(memberNull.getUsername()).isNull();
 ```
+
+### 페이징
+* 성능 최적화를 위해 `count` 쿼리를 별도로 작성하는 것을 고려해야 함
+  * `fetchResults()`는 deprecated 상태이기 때문에 가급적 사용하지 않는 방향으로 구현할 것
+
+```
+final List<Member> members = queryFactory
+    .selectFrom(member)
+    .orderBy(member.username.desc())
+    .offset(1)
+    .limit(2)
+    .fetch();
+
+assertThat(members.size()).isEqualTo(2);
+```
