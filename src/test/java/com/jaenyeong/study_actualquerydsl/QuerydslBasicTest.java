@@ -248,4 +248,103 @@ public class QuerydslBasicTest {
 
         assertThat(members).extracting("username").containsExactly("Team A", "Team B");
     }
+
+    @Test
+    void outerJoinOnFiltering() {
+        final List<Tuple> leftJoinOnResults = queryFactory
+            .select(member, team)
+            .from(member)
+            .leftJoin(member.team, team)
+            .on(team.name.eq("Team A"))
+            .fetch();
+
+        final Member member1 = leftJoinOnResults.get(0).get(member);
+        final Member member2 = leftJoinOnResults.get(1).get(member);
+        final Member member3 = leftJoinOnResults.get(2).get(member);
+        final Member member4 = leftJoinOnResults.get(3).get(member);
+
+        final Team teamA = leftJoinOnResults.get(0).get(team);
+        final Team teamB = leftJoinOnResults.get(2).get(team);
+
+        assertThat(member1).isNotNull();
+        assertThat(member1.getUsername()).isEqualTo("member1");
+        assertThat(member2).isNotNull();
+        assertThat(member2.getUsername()).isEqualTo("member2");
+        assertThat(member3).isNotNull();
+        assertThat(member3.getUsername()).isEqualTo("member3");
+        assertThat(member4).isNotNull();
+        assertThat(member4.getUsername()).isEqualTo("member4");
+
+        assertThat(teamA).isNotNull();
+        assertThat(teamA.getName()).isEqualTo("Team A");
+        assertThat(teamB).isNull();
+    }
+
+    @Test
+    void innerJoinOnFiltering() {
+        // inner join 사용 후에 on은 where 절에 필터링 조건을 넣는 것과 동일
+        final List<Tuple> joinWhereResults = queryFactory
+            .select(member, team)
+            .from(member)
+            .join(member.team, team)
+            .where(team.name.eq("Team A"))
+            .fetch();
+
+        final List<Tuple> joinOnResults = queryFactory
+            .select(member, team)
+            .from(member)
+            .join(member.team, team)
+            .on(team.name.eq("Team A"))
+            .fetch();
+
+        final Member whereMember1 = joinWhereResults.get(0).get(member);
+        final Member whereMember2 = joinWhereResults.get(1).get(member);
+        final Member onMember1 = joinOnResults.get(0).get(member);
+        final Member onMember2 = joinOnResults.get(1).get(member);
+
+        assertThat(joinWhereResults.size()).isEqualTo(joinOnResults.size());
+
+        assertThat(whereMember1).isEqualTo(onMember1);
+        assertThat(whereMember2).isEqualTo(onMember2);
+    }
+
+    @Test
+    void unrelatedOuterJoinOnFiltering() {
+        em.persist(new Member("Team A"));
+        em.persist(new Member("Team B"));
+        em.persist(new Member("Team C"));
+
+        final List<Tuple> queryResults = queryFactory
+            .select(member, team)
+            .from(member)
+            .leftJoin(team)
+            .on(member.username.eq(team.name))
+            .fetch();
+
+        final Tuple tuple4 = queryResults.get(4);
+        final Tuple tuple5 = queryResults.get(5);
+        final Tuple tuple6 = queryResults.get(6);
+
+        final Member teamAMember = tuple4.get(member);
+        final Member teamBMember = tuple5.get(member);
+        final Member teamCMember = tuple6.get(member);
+
+        final Team teamA = tuple4.get(team);
+        final Team teamB = tuple5.get(team);
+        final Team nullTeam = tuple6.get(team);
+
+        assertThat(teamAMember).isNotNull();
+        assertThat(teamBMember).isNotNull();
+        assertThat(teamCMember).isNotNull();
+        assertThat(teamA).isNotNull();
+        assertThat(teamB).isNotNull();
+        assertThat(nullTeam).isNull();
+
+        assertThat(teamAMember.getUsername()).isEqualTo("Team A");
+        assertThat(teamBMember.getUsername()).isEqualTo("Team B");
+        assertThat(teamCMember.getUsername()).isEqualTo("Team C");
+
+        assertThat(teamA.getName()).isEqualTo("Team A");
+        assertThat(teamB.getName()).isEqualTo("Team B");
+    }
 }
