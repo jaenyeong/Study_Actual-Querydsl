@@ -17,11 +17,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 public class QuerydslBasicTest {
     @Autowired
-    EntityManager em;
+    private EntityManager em;
 
     // JPAQueryFactory를 필드에 선언하여 사용 가능
     // 스프링에서는 스레드마다 각각 다른 EntityManager 인스턴스를 사용하게 되어 있기 때문
-    JPAQueryFactory queryFactory;
+    private JPAQueryFactory queryFactory;
 
     @BeforeEach
     void setup() {
@@ -72,5 +72,19 @@ public class QuerydslBasicTest {
 
         assertThat(findMember1).isNotNull();
         assertThat(findMember1.getUsername()).isEqualTo(memberName);
+    }
+
+    @Test
+    void search() {
+        final String givenMemberName = "member1";
+
+        final Member foundedMember = queryFactory
+            .selectFrom(member)
+            .where(member.username.eq(givenMemberName)
+                .and(member.age.eq(21))
+            ).fetchOne();
+
+        assertThat(foundedMember).isNotNull();
+        assertThat(foundedMember.getUsername()).isEqualTo(givenMemberName);
     }
 }
