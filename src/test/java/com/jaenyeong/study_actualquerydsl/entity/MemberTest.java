@@ -12,7 +12,7 @@ import java.util.List;
 @Transactional
 class MemberTest {
     @Autowired
-    EntityManager em;
+    private EntityManager em;
 
     @Test
     void testCreateEntity() {

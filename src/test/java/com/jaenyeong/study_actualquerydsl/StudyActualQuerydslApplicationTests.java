@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class StudyActualQuerydslApplicationTests {
 
     @Autowired
-    EntityManager em;
+    private EntityManager em;
 
     @Test
     void contextLoads() {
