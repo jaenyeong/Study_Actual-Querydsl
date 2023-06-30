@@ -27,7 +27,7 @@ public class Team {
 
     public void join(Member member) {
         if (member == null) {
-            throw new IllegalArgumentException("Member must not be null");
+            return;
         }
 
         this.members.add(member);

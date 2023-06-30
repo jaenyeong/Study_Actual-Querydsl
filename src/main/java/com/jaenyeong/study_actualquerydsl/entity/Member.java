@@ -36,7 +36,7 @@ public class Member {
 
     public void changeTeam(Team team) {
         if (team == null) {
-            throw new IllegalArgumentException("Team must not be null");
+            return;
         }
 
         this.team = team;
