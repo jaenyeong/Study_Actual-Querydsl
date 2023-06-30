@@ -196,3 +196,54 @@ final List<Member> members = queryFactory
 
 assertThat(members.size()).isEqualTo(2);
 ```
+
+### 집합
+* JPQL이 제공하는 모든 집합 함수 지원
+
+```
+final NumberExpression<Long> countExp = member.count();
+final NumberExpression<Integer> ageSumExp = member.age.sum();
+final NumberExpression<Double> ageAvgExp = member.age.avg();
+final NumberExpression<Integer> ageMaxExp = member.age.max();
+final NumberExpression<Integer> ageMinExp = member.age.min();
+
+final List<Tuple> memberSubQueryResults = queryFactory
+    .select(
+        countExp,
+        ageSumExp,
+        ageAvgExp,
+        ageMaxExp,
+        ageMinExp
+    )
+    .from(member)
+    .fetch();
+
+final Tuple resultTuple = memberSubQueryResults.get(0);
+
+assertThat(resultTuple.get(countExp)).isEqualTo(4);
+assertThat(resultTuple.get(ageSumExp)).isEqualTo(90);
+assertThat(resultTuple.get(ageAvgExp)).isEqualTo(22.5);
+assertThat(resultTuple.get(ageMaxExp)).isEqualTo(24);
+assertThat(resultTuple.get(ageMinExp)).isEqualTo(21);
+```
+
+### groupBy
+* `groupBy`의 결과를 제한할 때 `having` 사용 가능
+
+```
+final List<Tuple> queryResults = queryFactory
+    .select(team.name, member.age.avg())
+    .from(member)
+    .join(member.team, team)
+    .groupBy(team.name)
+    .fetch();
+
+final Tuple teamA = queryResults.get(0);
+final Tuple teamB = queryResults.get(1);
+
+assertThat(teamA.get(team.name)).isEqualTo("Team A");
+assertThat(teamA.get(member.age.avg())).isEqualTo(21.5);
+
+assertThat(teamB.get(team.name)).isEqualTo("Team B");
+assertThat(teamB.get(member.age.avg())).isEqualTo(23.5);
+```
