@@ -488,3 +488,30 @@ assertThat(queryResults).extracting(result -> result.get(0, String.class))
 assertThat(queryResults).extracting(result -> result.get(1, Integer.class))
     .containsExactly(24, 21, 22, 23);
 ```
+
+### 상수, 문자 더하기
+* `Expressions.constant()` 사용
+* `member.age.stringValue()`는 문자가 아닌 타입을 문자열로 변환
+  * `enum` 타입을 처리할 때도 사용됨
+
+```
+### Constant
+final List<Tuple> queryResults = queryFactory
+    .select(member.username, Expressions.constant("A"))
+    .from(member)
+    .fetch();
+
+assertThat(queryResults).extracting(result -> result.get(0, String.class))
+    .containsExactly("member1", "member2", "member3", "member4");
+assertThat(queryResults).extracting(result -> result.get(1, String.class))
+    .containsExactly("A", "A", "A", "A");
+
+### Concat String
+final String username = queryFactory
+    .select(member.username.concat("_").concat(member.age.stringValue()))
+    .from(member)
+    .where(member.username.eq("member1"))
+    .fetchOne();
+
+assertThat(username).isEqualTo("member1_21");
+```
