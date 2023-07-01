@@ -4,8 +4,8 @@ import com.jaenyeong.study_actualquerydsl.entity.Member;
 import com.jaenyeong.study_actualquerydsl.entity.QMember;
 import com.jaenyeong.study_actualquerydsl.entity.Team;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -445,5 +445,58 @@ public class QuerydslBasicTest {
             .containsExactly("member1", "member2", "member3", "member4");
         assertThat(queryResults).extracting(result -> result.get(1, Double.class))
             .containsExactly(22.5, 22.5, 22.5, 22.5);
+    }
+
+    @Test
+    void basicCase() {
+        final List<String> ageResults = queryFactory
+            .select(
+                member.age
+                    .when(21).then("스물한 살")
+                    .when(22).then("스물 두살")
+                    .otherwise("스물셋 이상")
+            )
+            .from(member)
+            .fetch();
+
+        assertThat(ageResults).containsExactly("스물한 살", "스물 두살", "스물셋 이상", "스물셋 이상");
+    }
+
+    @Test
+    void complexCase() {
+        final List<String> ageResults = queryFactory
+            .select(new CaseBuilder()
+                .when(member.age.between(0, 21)).then("0 ~ 21살")
+                .when(member.age.between(22, 23)).then("22 ~ 23살")
+                .otherwise("24살 이상")
+            )
+            .from(member)
+            .fetch();
+
+        assertThat(ageResults).containsExactly("0 ~ 21살", "22 ~ 23살", "22 ~ 23살", "24살 이상");
+    }
+
+    @Test
+    void caseWithRankPath() {
+        // 조회 데이터의 정렬 순서를 변경할 때
+        // [1] 24살 이상
+        // [2] 0 ~ 21살
+        // [3] 21 ~ 23살
+
+        final NumberExpression<Integer> rankPath = new CaseBuilder()
+            .when(member.age.between(0, 21)).then(2)
+            .when(member.age.between(22, 23)).then(1)
+            .otherwise(3);
+
+        final List<Tuple> queryResults = queryFactory
+            .select(member.username, member.age, rankPath)
+            .from(member)
+            .orderBy(rankPath.desc())
+            .fetch();
+
+        assertThat(queryResults).extracting(result -> result.get(0, String.class))
+            .containsExactly("member4", "member1", "member2", "member3");
+        assertThat(queryResults).extracting(result -> result.get(1, Integer.class))
+            .containsExactly(24, 21, 22, 23);
     }
 }
