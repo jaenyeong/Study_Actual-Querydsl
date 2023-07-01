@@ -6,6 +6,8 @@ import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.PersistenceUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,10 @@ public class QuerydslBasicTest {
     // JPAQueryFactory를 필드에 선언하여 사용 가능
     // 스프링에서는 스레드마다 각각 다른 EntityManager 인스턴스를 사용하게 되어 있기 때문
     private JPAQueryFactory queryFactory;
+
+    // EntityManager를 생성하는 객체
+    @PersistenceUnit
+    private EntityManagerFactory emf;
 
     @BeforeEach
     void setup() {
@@ -346,5 +352,31 @@ public class QuerydslBasicTest {
 
         assertThat(teamA.getName()).isEqualTo("Team A");
         assertThat(teamB.getName()).isEqualTo("Team B");
+    }
+
+    @Test
+    void fetchJoin() {
+        em.flush();
+        em.clear();
+
+        // 페치 조인 미적용
+        final Member foundMember1 = queryFactory
+            .selectFrom(member)
+            .where(member.username.eq("member1"))
+            .fetchOne();
+        // 엔티티의 초기화 상태 확인
+        final boolean foundMember1Loaded = emf.getPersistenceUnitUtil().isLoaded(foundMember1.getTeam());
+
+        // 페치 조인 적용
+        final Member foundMember2 = queryFactory
+            .selectFrom(member)
+            .join(member.team, team).fetchJoin()
+            .where(member.username.eq("member2"))
+            .fetchOne();
+        // 엔티티의 초기화 상태 확인
+        final boolean foundMember2Loaded = emf.getPersistenceUnitUtil().isLoaded(foundMember2.getTeam());
+
+        assertThat(foundMember1Loaded).as("페치 조인 미적용").isFalse();
+        assertThat(foundMember2Loaded).as("페치 조인 적용").isTrue();
     }
 }
