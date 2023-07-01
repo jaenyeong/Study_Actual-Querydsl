@@ -440,3 +440,51 @@ assertThat(foundMembers).extracting("age").containsExactly(22, 23, 24);
 
 ### select SubQuery
 ```
+
+### Case
+* `select`, `where`, `order by`에서 사용할 수 있음
+* 복잡한 경우 `CaseBuilder` 사용
+
+```
+### Basic case
+final List<String> ageResults = queryFactory
+    .select(
+        member.age
+            .when(21).then("스물한 살")
+            .when(22).then("스물 두살")
+            .otherwise("스물셋 이상")
+    )
+    .from(member)
+    .fetch();
+
+assertThat(ageResults).containsExactly("스물한 살", "스물 두살", "스물셋 이상", "스물셋 이상");
+
+### Complex case
+final List<String> ageResults = queryFactory
+    .select(new CaseBuilder()
+        .when(member.age.between(0, 21)).then("0 ~ 21살")
+        .when(member.age.between(21, 23)).then("21 ~ 23살")
+        .otherwise("24살 이상")
+    )
+    .from(member)
+    .fetch();
+
+assertThat(ageResults).containsExactly("0 ~ 21살", "21 ~ 23살", "21 ~ 23살", "24살 이상");
+
+### Case with rankPath
+final NumberExpression<Integer> rankPath = new CaseBuilder()
+    .when(member.age.between(0, 21)).then(2)
+    .when(member.age.between(22, 23)).then(1)
+    .otherwise(3);
+
+final List<Tuple> queryResults = queryFactory
+    .select(member.username, member.age, rankPath)
+    .from(member)
+    .orderBy(rankPath.desc())
+    .fetch();
+
+assertThat(queryResults).extracting(result -> result.get(0, String.class))
+    .containsExactly("member4", "member1", "member2", "member3");
+assertThat(queryResults).extracting(result -> result.get(1, Integer.class))
+    .containsExactly(24, 21, 22, 23);
+```
