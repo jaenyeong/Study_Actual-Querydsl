@@ -57,14 +57,14 @@ public class QuerydslBasicTest {
     void findMemberByJpql() {
         final String memberName = "member1";
 
-        final Member foundedMember = em.createQuery(
+        final Member foundMember = em.createQuery(
                 "select m from Member m where m.username = :username",
                 Member.class
             )
             .setParameter("username", memberName)
             .getSingleResult();
 
-        assertThat(foundedMember.getUsername()).isEqualTo(memberName);
+        assertThat(foundMember.getUsername()).isEqualTo(memberName);
     }
 
     @Test
@@ -75,28 +75,28 @@ public class QuerydslBasicTest {
         // Q-type 직접 별칭을 지정하여 사용하는 방법
 //        final QMember member = new QMember("member");
 
-        final Member findMember1 = queryFactory
+        final Member foundMember1 = queryFactory
             .select(member)
             .from(member)
             .where(member.username.eq(memberName))
             .fetchOne();
 
-        assertThat(findMember1).isNotNull();
-        assertThat(findMember1.getUsername()).isEqualTo(memberName);
+        assertThat(foundMember1).isNotNull();
+        assertThat(foundMember1.getUsername()).isEqualTo(memberName);
     }
 
     @Test
     void search() {
         final String givenMemberName = "member1";
 
-        final Member foundedMember = queryFactory
+        final Member foundMember = queryFactory
             .selectFrom(member)
             .where(member.username.eq(givenMemberName)
                 .and(member.age.eq(21))
             ).fetchOne();
 
-        assertThat(foundedMember).isNotNull();
-        assertThat(foundedMember.getUsername()).isEqualTo(givenMemberName);
+        assertThat(foundMember).isNotNull();
+        assertThat(foundMember.getUsername()).isEqualTo(givenMemberName);
     }
 
     @Test
@@ -105,15 +105,15 @@ public class QuerydslBasicTest {
 
         // search 테스트 메서드와 동일한 쿼리
         // 파라미터가 null인 경우 무시하기 때문에 편리하게 동적 쿼리 생성 가능
-        final Member foundedMember = queryFactory
+        final Member foundMember = queryFactory
             .selectFrom(member)
             .where(
                 member.username.eq(givenMemberName),
                 member.age.eq(21)
             ).fetchOne();
 
-        assertThat(foundedMember).isNotNull();
-        assertThat(foundedMember.getUsername()).isEqualTo(givenMemberName);
+        assertThat(foundMember).isNotNull();
+        assertThat(foundMember.getUsername()).isEqualTo(givenMemberName);
     }
 
     @Test
@@ -144,7 +144,7 @@ public class QuerydslBasicTest {
         em.persist(new Member("member5", 100));
         em.persist(new Member("member6", 100));
 
-        final List<Member> members = queryFactory
+        final List<Member> foundMembers = queryFactory
             .selectFrom(member)
             .where(member.age.eq(100))
             .orderBy(
@@ -153,9 +153,9 @@ public class QuerydslBasicTest {
             )
             .fetch();
 
-        final Member member5 = members.get(0);
-        final Member member6 = members.get(1);
-        final Member memberNull = members.get(2);
+        final Member member5 = foundMembers.get(0);
+        final Member member6 = foundMembers.get(1);
+        final Member memberNull = foundMembers.get(2);
 
         assertThat(member5.getUsername()).isEqualTo("member5");
         assertThat(member6.getUsername()).isEqualTo("member6");
@@ -164,7 +164,7 @@ public class QuerydslBasicTest {
 
     @Test
     void paging() {
-        final List<Member> members = queryFactory
+        final List<Member> foundMembers = queryFactory
             .selectFrom(member)
             .orderBy(member.username.desc())
             .offset(1)
@@ -179,7 +179,7 @@ public class QuerydslBasicTest {
 //            .limit(2)
 //            .fetchResults();
 
-        assertThat(members.size()).isEqualTo(2);
+        assertThat(foundMembers.size()).isEqualTo(2);
     }
 
     @Test
@@ -231,13 +231,13 @@ public class QuerydslBasicTest {
 
     @Test
     void join() {
-        final List<Member> members = queryFactory
+        final List<Member> foundMembers = queryFactory
             .selectFrom(member)
             .join(member.team, team)
             .where(team.name.eq("Team A"))
             .fetch();
 
-        assertThat(members).extracting("username").containsExactly("member1", "member2");
+        assertThat(foundMembers).extracting("username").containsExactly("member1", "member2");
     }
 
     @Test
@@ -246,13 +246,13 @@ public class QuerydslBasicTest {
         em.persist(new Member("Team B"));
         em.persist(new Member("Team C"));
 
-        final List<Member> members = queryFactory
+        final List<Member> foundMembers = queryFactory
             .select(member)
             .from(member, team)
             .where(member.username.eq(team.name))
             .fetch();
 
-        assertThat(members).extracting("username").containsExactly("Team A", "Team B");
+        assertThat(foundMembers).extracting("username").containsExactly("Team A", "Team B");
     }
 
     @Test
