@@ -388,3 +388,55 @@ final boolean foundMember2Loaded = emf.getPersistenceUnitUtil().isLoaded(foundMe
 assertThat(foundMember1Loaded).as("페치 조인 미적용").isFalse();
 assertThat(foundMember2Loaded).as("페치 조인 적용").isTrue();
 ```
+
+### 서브 쿼리
+* JPA JPQL은 `from` 절 서브 쿼리(인라인 뷰)를 지원하지 않음 (따라서 Querydsl도 지원하지 않음)
+* `select` 절 서브 쿼리는 지원
+* `from` 절 서브 쿼리는 조인을 통해 해결하거나 쿼리를 분리해 구현 또는 네이티브 쿼리를 사용
+
+```
+### eq
+final QMember subQMember = new QMember("memberSubQ");
+
+final List<Member> foundMembers = queryFactory
+    .selectFrom(member)
+    .where(member.age.eq(
+        JPAExpressions
+            .select(subQMember.age.max())
+            .from(subQMember)
+    )).fetch();
+
+final Member foundMember = foundMembers.get(0);
+
+assertThat(foundMembers).extracting("age").containsExactly(24);
+assertThat(foundMember.getAge()).isEqualTo(24);
+
+### Goe
+final QMember subQMember = new QMember("memberSubQ");
+
+final List<Member> foundMembers = queryFactory
+    .selectFrom(member)
+    .where(member.age.goe(
+        JPAExpressions
+            .select(subQMember.age.avg())
+            .from(subQMember)
+    )).fetch();
+
+assertThat(foundMembers).extracting("age").containsExactly(23, 24);
+
+### In
+final QMember subQMember = new QMember("memberSubQ");
+
+final List<Member> foundMembers = queryFactory
+    .selectFrom(member)
+    .where(member.age.in(
+        JPAExpressions
+            .select(subQMember.age)
+            .from(subQMember)
+            .where(subQMember.age.gt(21))
+    )).fetch();
+
+assertThat(foundMembers).extracting("age").containsExactly(22, 23, 24);
+
+### select SubQuery
+```
