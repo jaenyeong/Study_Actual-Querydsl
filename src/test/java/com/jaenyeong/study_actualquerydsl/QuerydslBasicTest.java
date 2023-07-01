@@ -5,6 +5,7 @@ import com.jaenyeong.study_actualquerydsl.entity.QMember;
 import com.jaenyeong.study_actualquerydsl.entity.Team;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
@@ -498,5 +499,31 @@ public class QuerydslBasicTest {
             .containsExactly("member4", "member1", "member2", "member3");
         assertThat(queryResults).extracting(result -> result.get(1, Integer.class))
             .containsExactly(24, 21, 22, 23);
+    }
+
+    @Test
+    void constant() {
+        // JPQL에서는 "A"가 없고 가져온 결과값에서 처리됨
+        final List<Tuple> queryResults = queryFactory
+            .select(member.username, Expressions.constant("A"))
+            .from(member)
+            .fetch();
+
+        assertThat(queryResults).extracting(result -> result.get(0, String.class))
+            .containsExactly("member1", "member2", "member3", "member4");
+        assertThat(queryResults).extracting(result -> result.get(1, String.class))
+            .containsExactly("A", "A", "A", "A");
+    }
+
+    @Test
+    void concatString() {
+        // {username}_{age}
+        final String username = queryFactory
+            .select(member.username.concat("_").concat(member.age.stringValue()))
+            .from(member)
+            .where(member.username.eq("member1"))
+            .fetchOne();
+
+        assertThat(username).isEqualTo("member1_21");
     }
 }
