@@ -360,3 +360,31 @@ assertThat(teamCMember.getUsername()).isEqualTo("Team C");
 assertThat(teamA.getName()).isEqualTo("Team A");
 assertThat(teamB.getName()).isEqualTo("Team B");
 ```
+
+### 페치 조인
+* `join()`, `leftJoin()` 등 조인 뒤에 `fetchJoin()` 추가
+
+```
+em.flush();
+em.clear();
+
+// 페치 조인 미적용
+final Member foundMember1 = queryFactory
+    .selectFrom(member)
+    .where(member.username.eq("member1"))
+    .fetchOne();
+// 엔티티의 초기화 상태 확인
+final boolean foundMember1Loaded = emf.getPersistenceUnitUtil().isLoaded(foundMember1.getTeam());
+
+// 페치 조인 적용
+final Member foundMember2 = queryFactory
+    .selectFrom(member)
+    .join(member.team, team).fetchJoin()
+    .where(member.username.eq("member2"))
+    .fetchOne();
+// 엔티티의 초기화 상태 확인
+final boolean foundMember2Loaded = emf.getPersistenceUnitUtil().isLoaded(foundMember2.getTeam());
+
+assertThat(foundMember1Loaded).as("페치 조인 미적용").isFalse();
+assertThat(foundMember2Loaded).as("페치 조인 적용").isTrue();
+```
