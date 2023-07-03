@@ -708,3 +708,26 @@ final List<Member> foundMembers = queryFactory
 assertThat(deleteCount).isEqualTo(4);
 assertThat(foundMembers.size()).isEqualTo(0);
 ```
+
+### SQL function
+* `Dialect`에 등록된 함수만 호출 가능
+
+```
+### sqlFunction
+final List<String> queryResults = queryFactory
+    .select(Expressions.stringTemplate("function('replace', {0}, {1}, {2})", member.username, "member", "M"))
+    .from(member)
+    .fetch();
+
+assertThat(queryResults).containsExactly("M1", "M2", "M3", "M4");
+
+### sqlFunctionLowerExample
+final List<String> queryResults = queryFactory
+    .select(member.username)
+    .from(member)
+//    .where(member.username.eq(Expressions.stringTemplate("function('lower', {0})", member.username)))
+    .where(member.username.eq(member.username.lower()))
+    .fetch();
+
+assertThat(queryResults.size()).isEqualTo(4);
+```
