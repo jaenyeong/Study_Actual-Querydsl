@@ -593,3 +593,58 @@ final List<MemberDto> memberDtos = queryFactory
     .from(member)
     .fetch();
 ```
+
+### 동적 쿼리
+* `BooleanBuilder`
+* `Where` 절에 가변인자 사용
+  * `null` 파라미터는 무시됨
+  
+```
+### dynamicQueryBooleanBuilder
+final String username = "member1";
+final Integer age = 21;
+
+final List<Member> members = searchMembersByBuilder(username, age);
+
+assertThat(members.size()).isEqualTo(1);
+
+#### searchMembersByBuilder
+final BooleanBuilder boolBuilder = new BooleanBuilder();
+if (username != null) {
+    boolBuilder.and(member.username.eq(username));
+}
+if (age != null) {
+    boolBuilder.and(member.age.eq(age));
+}
+
+return queryFactory
+    .selectFrom(member)
+    .from(member)
+    .where(boolBuilder)
+    .fetch();
+
+### dynamicQueryWhereArgs
+final String username = "member1";
+final Integer age = 21;
+
+final List<Member> members = searchMembersByWhere(username, age);
+
+assertThat(members.size()).isEqualTo(1);
+
+#### searchMembersByWhere
+return queryFactory
+    .selectFrom(member)
+    .from(member)
+    .where(allEq(username, age))
+    .fetch();
+
+#### allEq
+return usernameEq(username).and(ageEq(age));
+
+#### usernameEq
+return username != null ? member.username.eq(username) : null;
+
+#### ageEq
+return age != null ? member.age.eq(age) : null;
+
+```
