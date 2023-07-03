@@ -10,7 +10,6 @@ import com.jaenyeong.study_actualquerydsl.entity.Team;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
@@ -31,7 +30,7 @@ import java.util.List;
 
 import static com.jaenyeong.study_actualquerydsl.entity.QMember.member;
 import static com.jaenyeong.study_actualquerydsl.entity.QTeam.team;
-import static com.querydsl.jpa.JPAExpressions.*;
+import static com.querydsl.jpa.JPAExpressions.select;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
@@ -756,5 +755,71 @@ public class QuerydslBasicTest {
 
     private BooleanExpression ageEq(Integer age) {
         return age != null ? member.age.eq(age) : null;
+    }
+
+    @Test
+//    @Commit
+    void bulkUpdate() {
+        final long updateCount = queryFactory
+            .update(member)
+            .set(member.username, "비회원")
+            .where(member.age.lt(23))
+            .execute();
+
+        em.flush();
+        em.clear();
+
+        final List<Member> foundMembers = queryFactory
+            .selectFrom(member)
+            .fetch();
+
+        assertThat(updateCount).isEqualTo(2);
+        assertThat(foundMembers.get(0).getUsername()).isEqualTo("비회원");
+        assertThat(foundMembers.get(1).getUsername()).isEqualTo("비회원");
+        assertThat(foundMembers.get(2).getUsername()).isEqualTo("member3");
+        assertThat(foundMembers.get(3).getUsername()).isEqualTo("member4");
+    }
+
+    @Test
+    void bulkAgeAdd() {
+        final long updateCount = queryFactory
+            .update(member)
+            .set(member.age, member.age.add(1))
+            // 그 외 사칙연산 가능
+//            .set(member.age, member.age.add(-1))
+//            .set(member.age, member.age.multiply(2))
+//            .set(member.age, member.age.divide(2))
+            .execute();
+
+        em.flush();
+        em.clear();
+
+        final List<Member> foundMembers = queryFactory
+            .selectFrom(member)
+            .fetch();
+
+        assertThat(updateCount).isEqualTo(4);
+        assertThat(foundMembers.get(0).getAge()).isEqualTo(22);
+        assertThat(foundMembers.get(1).getAge()).isEqualTo(23);
+        assertThat(foundMembers.get(2).getAge()).isEqualTo(24);
+        assertThat(foundMembers.get(3).getAge()).isEqualTo(25);
+    }
+
+    @Test
+    void bulkDelete() {
+        final long deleteCount = queryFactory
+            .delete(member)
+            .where(member.age.gt(20))
+            .execute();
+
+        em.flush();
+        em.clear();
+
+        final List<Member> foundMembers = queryFactory
+            .selectFrom(member)
+            .fetch();
+
+        assertThat(deleteCount).isEqualTo(4);
+        assertThat(foundMembers.size()).isEqualTo(0);
     }
 }
