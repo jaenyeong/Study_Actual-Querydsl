@@ -648,3 +648,63 @@ return username != null ? member.username.eq(username) : null;
 return age != null ? member.age.eq(age) : null;
 
 ```
+
+### 벌크 연산
+* 벌크 연산 쿼리는 바로 DB로 전송되기 때문에 영속성 컨텍스트를 초기화 해줘야함
+
+```
+### bulkUpdate
+final long updateCount = queryFactory
+    .update(member)
+    .set(member.username, "비회원")
+    .where(member.age.lt(23))
+    .execute();
+
+em.flush();
+em.clear();
+
+final List<Member> foundMembers = queryFactory
+    .selectFrom(member)
+    .fetch();
+
+assertThat(updateCount).isEqualTo(2);
+assertThat(foundMembers.get(0).getUsername()).isEqualTo("비회원");
+assertThat(foundMembers.get(1).getUsername()).isEqualTo("비회원");
+assertThat(foundMembers.get(2).getUsername()).isEqualTo("member3");
+assertThat(foundMembers.get(3).getUsername()).isEqualTo("member4");
+
+### bulkAgeAdd
+final long updateCount = queryFactory
+    .update(member)
+    .set(member.age, member.age.add(1))
+    .execute();
+
+em.flush();
+em.clear();
+
+final List<Member> foundMembers = queryFactory
+    .selectFrom(member)
+    .fetch();
+
+assertThat(updateCount).isEqualTo(4);
+assertThat(foundMembers.get(0).getAge()).isEqualTo(22);
+assertThat(foundMembers.get(1).getAge()).isEqualTo(23);
+assertThat(foundMembers.get(2).getAge()).isEqualTo(24);
+assertThat(foundMembers.get(3).getAge()).isEqualTo(25);
+
+### bulkDelete
+final long deleteCount = queryFactory
+    .delete(member)
+    .where(member.age.gt(20))
+    .execute();
+
+em.flush();
+em.clear();
+
+final List<Member> foundMembers = queryFactory
+    .selectFrom(member)
+    .fetch();
+
+assertThat(deleteCount).isEqualTo(4);
+assertThat(foundMembers.size()).isEqualTo(0);
+```
