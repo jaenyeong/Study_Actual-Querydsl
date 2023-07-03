@@ -515,3 +515,81 @@ final String username = queryFactory
 
 assertThat(username).isEqualTo("member1_21");
 ```
+
+### 프로젝션
+* `select` 대상 지정
+  * 타입이 하나면 명확하게 지정가능하나 둘 이상이면 튜플, DTO 등으로 조회
+* `jpql`에서는 `new` 키워드로 생성해서 사용해야하며 생성자 방식만 지원
+* `querydsl`에서는 `setter`, `field`, `constructor` 3가지 방식 지원
+  * `record`클래스는 기본적으로 불변이기 때문에 `setter`, `field` 방식으로 사용할 수 없고 `constructor` 방식만 사용 가능
+* DTO의 프로퍼티명과 다를 때 별칭을 주어 처리
+  * `ExpressionUtils.as(#{source}, #{alias})` 방식은 필드, 서브 쿼리 별칭에 사용
+  * `username.as("name")` 방식은 필드 별칭에 사용
+* `MemberDto` 클래스 생성자에 `@QueryProjection` 애너테이션을 태깅해서 QClass로 컴파일해 사용 가능
+  * 하지만 DTO 클래스에 Querydsl에 대한 의존성이 생김
+  * DTO 자체가 어떠한 레이어에서도 사용할 수 있기 때문에 querydsl
+
+```
+## assert 구문 생략
+
+### projection
+final List<String> queryResults = queryFactory
+    .select(member.username)
+    .from(member)
+    .fetch();
+
+### tupleProjection
+final List<Tuple> queryResults = queryFactory
+    .select(member.username, member.age)
+    .from(member)
+    .fetch();
+
+### jpqlDtoProjection
+final List<MemberDto> memberDtos = em.createQuery(
+        "select new com.jaenyeong.study_actualquerydsl.dto.MemberDto(m.username, m.age) from Member m ",
+        MemberDto.class
+    )
+    .getResultList();
+
+### querydslDtoBySetterProjection
+final List<MemberDto> memberDtos = queryFactory
+    .select(Projections.bean(MemberDto.class, member.username, member.age))
+    .from(member)
+    .fetch();
+
+### querydslDtoByFieldProjection
+final List<MemberDto> memberDtos = queryFactory
+    .select(Projections.fields(MemberDto.class, member.username, member.age))
+    .from(member)
+    .fetch();
+            
+### querydslDtoByConstructorProjection
+final List<MemberRecordDto> memberRecordDtos = queryFactory
+    .select(Projections.constructor(MemberRecordDto.class, member.username, member.age))
+    .from(member)
+    .fetch();
+    
+### querydslOtherDtoByFieldProjection
+final QMember subQMember = new QMember("subQMember");
+
+final List<UserDto> memberDtos = queryFactory
+    .select(Projections.fields(
+        UserDto.class,
+        member.username.as("name"),
+        ExpressionUtils.as(JPAExpressions.select(subQMember.age.max()).from(subQMember), "age"))
+    )
+    .from(member)
+    .fetch();
+
+### querydslOtherDtoByConstructorProjection
+final List<UserDto> userDtos = queryFactory
+    .select(Projections.constructor(UserDto.class, member.username, member.age))
+    .from(member)
+    .fetch();
+
+### querydslDtoByQueryProjection
+final List<MemberDto> memberDtos = queryFactory
+    .select(new QMemberDto(member.username, member.age))
+    .from(member)
+    .fetch();
+```
