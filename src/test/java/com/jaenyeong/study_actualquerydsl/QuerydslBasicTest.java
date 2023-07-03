@@ -822,4 +822,26 @@ public class QuerydslBasicTest {
         assertThat(deleteCount).isEqualTo(4);
         assertThat(foundMembers.size()).isEqualTo(0);
     }
+
+    @Test
+    void sqlFunction() {
+        final List<String> queryResults = queryFactory
+            .select(Expressions.stringTemplate("function('replace', {0}, {1}, {2})", member.username, "member", "M"))
+            .from(member)
+            .fetch();
+
+        assertThat(queryResults).containsExactly("M1", "M2", "M3", "M4");
+    }
+
+    @Test
+    void sqlFunctionLowerExample() {
+        final List<String> queryResults = queryFactory
+            .select(member.username)
+            .from(member)
+//            .where(member.username.eq(Expressions.stringTemplate("function('lower', {0})", member.username)))
+            .where(member.username.eq(member.username.lower()))
+            .fetch();
+
+        assertThat(queryResults.size()).isEqualTo(4);
+    }
 }
