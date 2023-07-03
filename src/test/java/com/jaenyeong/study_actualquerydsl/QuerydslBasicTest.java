@@ -7,9 +7,12 @@ import com.jaenyeong.study_actualquerydsl.dto.UserDto;
 import com.jaenyeong.study_actualquerydsl.entity.Member;
 import com.jaenyeong.study_actualquerydsl.entity.QMember;
 import com.jaenyeong.study_actualquerydsl.entity.Team;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -697,5 +700,61 @@ public class QuerydslBasicTest {
         assertThat(memberDtos.get(2).getAge()).isEqualTo(23);
         assertThat(memberDtos.get(3).getUsername()).isEqualTo("member4");
         assertThat(memberDtos.get(3).getAge()).isEqualTo(24);
+    }
+
+    @Test
+    void dynamicQueryBooleanBuilder() {
+        final String username = "member1";
+        final Integer age = 21;
+
+        final List<Member> members = searchMembersByBuilder(username, age);
+
+        assertThat(members.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMembersByBuilder(String username, Integer age) {
+        final BooleanBuilder boolBuilder = new BooleanBuilder();
+        if (username != null) {
+            boolBuilder.and(member.username.eq(username));
+        }
+        if (age != null) {
+            boolBuilder.and(member.age.eq(age));
+        }
+
+        return queryFactory
+            .selectFrom(member)
+            .from(member)
+            .where(boolBuilder)
+            .fetch();
+    }
+
+    @Test
+    void dynamicQueryWhereArgs() {
+        final String username = "member1";
+        final Integer age = 21;
+
+        final List<Member> members = searchMembersByWhere(username, age);
+
+        assertThat(members.size()).isEqualTo(1);
+    }
+
+    private List<Member> searchMembersByWhere(String username, Integer age) {
+        return queryFactory
+            .selectFrom(member)
+            .from(member)
+            .where(allEq(username, age))
+            .fetch();
+    }
+
+    private BooleanExpression allEq(String username, int age) {
+        return usernameEq(username).and(ageEq(age));
+    }
+
+    private BooleanExpression usernameEq(String username) {
+        return username != null ? member.username.eq(username) : null;
+    }
+
+    private BooleanExpression ageEq(Integer age) {
+        return age != null ? member.age.eq(age) : null;
     }
 }
