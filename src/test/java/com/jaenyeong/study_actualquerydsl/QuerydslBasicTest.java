@@ -1,12 +1,19 @@
 package com.jaenyeong.study_actualquerydsl;
 
+import com.jaenyeong.study_actualquerydsl.dto.MemberDto;
+import com.jaenyeong.study_actualquerydsl.dto.MemberRecordDto;
+import com.jaenyeong.study_actualquerydsl.dto.QMemberDto;
+import com.jaenyeong.study_actualquerydsl.dto.UserDto;
 import com.jaenyeong.study_actualquerydsl.entity.Member;
 import com.jaenyeong.study_actualquerydsl.entity.QMember;
 import com.jaenyeong.study_actualquerydsl.entity.Team;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -525,5 +532,170 @@ public class QuerydslBasicTest {
             .fetchOne();
 
         assertThat(username).isEqualTo("member1_21");
+    }
+
+    @Test
+    void projection() {
+        final List<String> queryResults = queryFactory
+            .select(member.username)
+            .from(member)
+            .fetch();
+
+        assertThat(queryResults.size()).isEqualTo(4);
+        assertThat(queryResults.get(0)).isEqualTo("member1");
+        assertThat(queryResults.get(1)).isEqualTo("member2");
+        assertThat(queryResults.get(2)).isEqualTo("member3");
+        assertThat(queryResults.get(3)).isEqualTo("member4");
+    }
+
+    @Test
+    void tupleProjection() {
+        final List<Tuple> queryResults = queryFactory
+            .select(member.username, member.age)
+            .from(member)
+            .fetch();
+
+        assertThat(queryResults.size()).isEqualTo(4);
+        assertThat(queryResults.get(0).get(member.username)).isEqualTo("member1");
+        assertThat(queryResults.get(0).get(member.age)).isEqualTo(21);
+        assertThat(queryResults.get(1).get(member.username)).isEqualTo("member2");
+        assertThat(queryResults.get(1).get(member.age)).isEqualTo(22);
+        assertThat(queryResults.get(2).get(member.username)).isEqualTo("member3");
+        assertThat(queryResults.get(2).get(member.age)).isEqualTo(23);
+        assertThat(queryResults.get(3).get(member.username)).isEqualTo("member4");
+        assertThat(queryResults.get(3).get(member.age)).isEqualTo(24);
+    }
+
+    @Test
+    void jpqlDtoProjection() {
+        final List<MemberDto> memberDtos = em.createQuery(
+                "select new com.jaenyeong.study_actualquerydsl.dto.MemberDto(m.username, m.age) from Member m ",
+                MemberDto.class
+            )
+            .getResultList();
+
+        assertThat(memberDtos.size()).isEqualTo(4);
+        assertThat(memberDtos.get(0).getUsername()).isEqualTo("member1");
+        assertThat(memberDtos.get(0).getAge()).isEqualTo(21);
+        assertThat(memberDtos.get(1).getUsername()).isEqualTo("member2");
+        assertThat(memberDtos.get(1).getAge()).isEqualTo(22);
+        assertThat(memberDtos.get(2).getUsername()).isEqualTo("member3");
+        assertThat(memberDtos.get(2).getAge()).isEqualTo(23);
+        assertThat(memberDtos.get(3).getUsername()).isEqualTo("member4");
+        assertThat(memberDtos.get(3).getAge()).isEqualTo(24);
+    }
+
+    @Test
+    void querydslDtoBySetterProjection() {
+        final List<MemberDto> memberDtos = queryFactory
+            .select(Projections.bean(MemberDto.class, member.username, member.age))
+            .from(member)
+            .fetch();
+
+        assertThat(memberDtos.size()).isEqualTo(4);
+        assertThat(memberDtos.get(0).getUsername()).isEqualTo("member1");
+        assertThat(memberDtos.get(0).getAge()).isEqualTo(21);
+        assertThat(memberDtos.get(1).getUsername()).isEqualTo("member2");
+        assertThat(memberDtos.get(1).getAge()).isEqualTo(22);
+        assertThat(memberDtos.get(2).getUsername()).isEqualTo("member3");
+        assertThat(memberDtos.get(2).getAge()).isEqualTo(23);
+        assertThat(memberDtos.get(3).getUsername()).isEqualTo("member4");
+        assertThat(memberDtos.get(3).getAge()).isEqualTo(24);
+    }
+
+    @Test
+    void querydslDtoByFieldProjection() {
+        final List<MemberDto> memberDtos = queryFactory
+            .select(Projections.fields(MemberDto.class, member.username, member.age))
+            .from(member)
+            .fetch();
+
+        assertThat(memberDtos.size()).isEqualTo(4);
+        assertThat(memberDtos.get(0).getUsername()).isEqualTo("member1");
+        assertThat(memberDtos.get(0).getAge()).isEqualTo(21);
+        assertThat(memberDtos.get(1).getUsername()).isEqualTo("member2");
+        assertThat(memberDtos.get(1).getAge()).isEqualTo(22);
+        assertThat(memberDtos.get(2).getUsername()).isEqualTo("member3");
+        assertThat(memberDtos.get(2).getAge()).isEqualTo(23);
+        assertThat(memberDtos.get(3).getUsername()).isEqualTo("member4");
+        assertThat(memberDtos.get(3).getAge()).isEqualTo(24);
+    }
+
+    @Test
+    void querydslDtoByConstructorProjection() {
+        final List<MemberRecordDto> memberRecordDtos = queryFactory
+            .select(Projections.constructor(MemberRecordDto.class, member.username, member.age))
+            .from(member)
+            .fetch();
+
+        assertThat(memberRecordDtos.size()).isEqualTo(4);
+        assertThat(memberRecordDtos.get(0).username()).isEqualTo("member1");
+        assertThat(memberRecordDtos.get(0).age()).isEqualTo(21);
+        assertThat(memberRecordDtos.get(1).username()).isEqualTo("member2");
+        assertThat(memberRecordDtos.get(1).age()).isEqualTo(22);
+        assertThat(memberRecordDtos.get(2).username()).isEqualTo("member3");
+        assertThat(memberRecordDtos.get(2).age()).isEqualTo(23);
+        assertThat(memberRecordDtos.get(3).username()).isEqualTo("member4");
+        assertThat(memberRecordDtos.get(3).age()).isEqualTo(24);
+    }
+
+    @Test
+    void querydslOtherDtoByFieldProjection() {
+        final QMember subQMember = new QMember("subQMember");
+
+        final List<UserDto> memberDtos = queryFactory
+            .select(Projections.fields(
+                UserDto.class,
+                member.username.as("name"),
+                ExpressionUtils.as(JPAExpressions.select(subQMember.age.max()).from(subQMember), "age"))
+            )
+            .from(member)
+            .fetch();
+
+        assertThat(memberDtos.size()).isEqualTo(4);
+        assertThat(memberDtos.get(0).getName()).isEqualTo("member1");
+        assertThat(memberDtos.get(0).getAge()).isEqualTo(24);
+        assertThat(memberDtos.get(1).getName()).isEqualTo("member2");
+        assertThat(memberDtos.get(1).getAge()).isEqualTo(24);
+        assertThat(memberDtos.get(2).getName()).isEqualTo("member3");
+        assertThat(memberDtos.get(2).getAge()).isEqualTo(24);
+        assertThat(memberDtos.get(3).getName()).isEqualTo("member4");
+        assertThat(memberDtos.get(3).getAge()).isEqualTo(24);
+    }
+
+    @Test
+    void querydslOtherDtoByConstructorProjection() {
+        final List<UserDto> userDtos = queryFactory
+            .select(Projections.constructor(UserDto.class, member.username, member.age))
+            .from(member)
+            .fetch();
+
+        assertThat(userDtos.size()).isEqualTo(4);
+        assertThat(userDtos.get(0).getName()).isEqualTo("member1");
+        assertThat(userDtos.get(0).getAge()).isEqualTo(21);
+        assertThat(userDtos.get(1).getName()).isEqualTo("member2");
+        assertThat(userDtos.get(1).getAge()).isEqualTo(22);
+        assertThat(userDtos.get(2).getName()).isEqualTo("member3");
+        assertThat(userDtos.get(2).getAge()).isEqualTo(23);
+        assertThat(userDtos.get(3).getName()).isEqualTo("member4");
+        assertThat(userDtos.get(3).getAge()).isEqualTo(24);
+    }
+
+    @Test
+    void querydslDtoByQueryProjection() {
+        final List<MemberDto> memberDtos = queryFactory
+            .select(new QMemberDto(member.username, member.age))
+            .from(member)
+            .fetch();
+
+        assertThat(memberDtos.size()).isEqualTo(4);
+        assertThat(memberDtos.get(0).getUsername()).isEqualTo("member1");
+        assertThat(memberDtos.get(0).getAge()).isEqualTo(21);
+        assertThat(memberDtos.get(1).getUsername()).isEqualTo("member2");
+        assertThat(memberDtos.get(1).getAge()).isEqualTo(22);
+        assertThat(memberDtos.get(2).getUsername()).isEqualTo("member3");
+        assertThat(memberDtos.get(2).getAge()).isEqualTo(23);
+        assertThat(memberDtos.get(3).getUsername()).isEqualTo("member4");
+        assertThat(memberDtos.get(3).getAge()).isEqualTo(24);
     }
 }
