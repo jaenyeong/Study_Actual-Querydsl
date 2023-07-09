@@ -1,6 +1,10 @@
 package com.jaenyeong.study_actualquerydsl.repoistory;
 
+import com.jaenyeong.study_actualquerydsl.dto.MemberSearchCondition;
+import com.jaenyeong.study_actualquerydsl.dto.MemberTeamDto;
+import com.jaenyeong.study_actualquerydsl.dto.QMemberTeamDto;
 import com.jaenyeong.study_actualquerydsl.entity.Member;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Repository;
@@ -9,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.jaenyeong.study_actualquerydsl.entity.QMember.member;
+import static com.jaenyeong.study_actualquerydsl.entity.QTeam.team;
+import static org.springframework.util.StringUtils.hasText;
 
 @Repository
 public class MemberJpaRepository {
@@ -51,6 +57,35 @@ public class MemberJpaRepository {
         return queryFactory
             .selectFrom(member)
             .where(member.username.eq(username))
+            .fetch();
+    }
+
+    public List<MemberTeamDto> searchByBuilder(MemberSearchCondition condition) {
+        final BooleanBuilder boolBuilder = new BooleanBuilder();
+        if (hasText(condition.getUsername())) {
+            boolBuilder.and(member.username.eq(condition.getUsername()));
+        }
+        if (hasText(condition.getTeamName())) {
+            boolBuilder.and(team.name.eq(condition.getTeamName()));
+        }
+        if (condition.getAgeGoe() != null) {
+            boolBuilder.and(member.age.goe(condition.getAgeGoe()));
+        }
+        if (condition.getAgeLoe() != null) {
+            boolBuilder.and(member.age.loe(condition.getAgeLoe()));
+        }
+
+        return queryFactory
+            .select(new QMemberTeamDto(
+                member.id,
+                member.username,
+                member.age,
+                team.id,
+                team.name
+            ))
+            .from(member)
+            .leftJoin(member.team, team)
+            .where(boolBuilder)
             .fetch();
     }
 }
