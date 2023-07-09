@@ -860,3 +860,62 @@ final List<MemberTeamDto> memberTeamDtos = memberJpaRepository.searchByWhere(con
 
 assertThat(memberTeamDtos).extracting("username").containsExactly("member4");
 ```
+
+### 조회 API 컨트롤러 개발
+
+#### 프로파일 분리
+
+```
+### 프로덕션
+spring:
+  profiles:
+    active: local
+    
+### 테스트
+#### test 경로에 resources 디렉터리 생성, 프로덕션의 application.yml 파일을 복사해 생성 프로파일만 수정
+spring:
+  profiles:
+    active: test
+```
+
+#### Local 프로파일의 테스트 데이터 생성
+* 스프링 Bean 라이프 사이클로 인해 데이터를 생성하는 로직을 @PostConstruct(init) 메서드에 직접 넣을 수 없음
+  * `@Transactional`과 `@PostConstruct` 은 서로 다른 시점에 활성화 되기 때문에 같이 사용될 수 없음
+  * `@Transactional`은 트랜잭션 매니저가 완전히 초기화된 후 동작 가능함  
+    따라서 `@PostConstruct` 실행 시점에 실행될 준비가 완전히 되어 있지 않음
+  * `InitializingBean` 인터페이스를 구현하거나 `@PostConstruct` 메서드 안에 별도의 트랜잭션을 생성, 종료하여 처리 가능  
+    물론 이 방법은 조금 더 복잡한 형태가 됨
+
+```
+@Profile("local")
+@Component
+@RequiredArgsConstructor
+public class InitMember {
+    private final InitMemberService initMemberService;
+
+    @PostConstruct
+    public void init() {
+        initMemberService.init();
+    }
+
+    @Component
+    static class InitMemberService {
+        @PersistenceContext
+        private EntityManager em;
+
+        @Transactional
+        public void init() {
+            final Team teamA = new Team("Team A");
+            final Team teamB = new Team("Team B");
+
+            em.persist(teamA);
+            em.persist(teamB);
+
+            for (int i = 0; i < 100; i++) {
+                final Team selectedTeam = i % 2 == 0 ? teamA : teamB;
+                em.persist(new Member("member" + i, i, selectedTeam));
+            }
+        }
+    }
+}
+```
