@@ -802,3 +802,33 @@ assertThat(allMembers).containsExactly(member1);
 final List<Member> foundMembersByUsername = memberJpaRepository.findByUsername_querydsl(member1.getUsername());
 assertThat(foundMembersByUsername).containsExactly(member1);
 ```
+
+### 동적 쿼리와 성능 최적화 조회 - Builder 사용
+* `MemberTeamDto` 클래스에서 `@QueryProjection` 애너테이션을 사용하여 Querydsl을 의존하게 됨
+  * 이 대신 애너테이션 제거 후 `Projection.bean()`, `fields()`, `constructor()` 등을 사용할 수 있음
+
+```
+### searchConditionTest
+final Team teamA = new Team("Team A");
+final Team teamB = new Team("Team B");
+em.persist(teamA);
+em.persist(teamB);
+
+final Member member1 = new Member("member1", 21, teamA);
+final Member member2 = new Member("member2", 23, teamA);
+final Member member3 = new Member("member3", 25, teamB);
+final Member member4 = new Member("member4", 27, teamB);
+em.persist(member1);
+em.persist(member2);
+em.persist(member3);
+em.persist(member4);
+
+final MemberSearchCondition condition = new MemberSearchCondition();
+condition.setAgeGoe(26);
+condition.setAgeLoe(27);
+condition.setTeamName("Team B");
+
+final List<MemberTeamDto> memberTeamDtos = memberJpaRepository.searchByBuilder(condition);
+
+assertThat(memberTeamDtos).extracting("username").containsExactly("member4");
+```
