@@ -54,7 +54,7 @@ class MemberJpaRepositoryTest {
     }
 
     @Test
-    void searchConditionTest() {
+    void searchConditionWithBooleanBuilderTest() {
         final Team teamA = new Team("Team A");
         final Team teamB = new Team("Team B");
         em.persist(teamA);

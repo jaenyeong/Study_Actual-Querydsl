@@ -808,7 +808,7 @@ assertThat(foundMembersByUsername).containsExactly(member1);
   * 이 대신 애너테이션 제거 후 `Projection.bean()`, `fields()`, `constructor()` 등을 사용할 수 있음
 
 ```
-### searchConditionTest
+### searchConditionWithBooleanBuilderTest
 final Team teamA = new Team("Team A");
 final Team teamB = new Team("Team B");
 em.persist(teamA);
