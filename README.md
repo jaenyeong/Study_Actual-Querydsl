@@ -731,3 +731,74 @@ final List<String> queryResults = queryFactory
 
 assertThat(queryResults.size()).isEqualTo(4);
 ```
+
+## 순수 JPA와 Querydsl
+
+### 순수 JPA 리포지터리와 Querydsl
+
+```
+### JPAQueryFactory 빈 등록
+@Bean
+JPAQueryFactory jpaQueryFactory(EntityManager em) {
+    return new JPAQueryFactory(em);
+}
+
+### MemberJpaRepistory
+@Repository
+public class MemberJpaRepository {
+    private final EntityManager em;
+    private final JPAQueryFactory queryFactory;
+
+    public MemberJpaRepository(EntityManager em) {
+        this.em = em;
+        // JPAQueryFactory를 Bean으로 등록했다면 직접 주입 받아 사용 가능
+        this.queryFactory = new JPAQueryFactory(em);
+    }
+
+    public void save(Member member) {
+        em.persist(member);
+    }
+
+    public Optional<Member> findById(Long id) {
+        final Member foundMember = em.find(Member.class, id);
+        return Optional.ofNullable(foundMember);
+    }
+
+    public List<Member> findAll() {
+        return em.createQuery("select m from Member m", Member.class)
+            .getResultList();
+    }
+
+    public List<Member> findAll_querydsl() {
+        return queryFactory
+            .selectFrom(member)
+            .fetch();
+    }
+
+    public List<Member> findByUsername(String username) {
+        return em.createQuery("select m from Member m where m.username = :username", Member.class)
+            .setParameter("username", username)
+            .getResultList();
+    }
+
+    public List<Member> findByUsername_querydsl(String username) {
+        return queryFactory
+            .selectFrom(member)
+            .where(member.username.eq(username))
+            .fetch();
+    }
+}
+
+### basicQuerydslTest
+final Member member1 = new Member("member1", 10);
+memberJpaRepository.save(member1);
+
+final Member foundMember = memberJpaRepository.findById(member1.getId()).get();
+assertThat(foundMember).isEqualTo(member1);
+
+final List<Member> allMembers = memberJpaRepository.findAll_querydsl();
+assertThat(allMembers).containsExactly(member1);
+
+final List<Member> foundMembersByUsername = memberJpaRepository.findByUsername_querydsl(member1.getUsername());
+assertThat(foundMembersByUsername).containsExactly(member1);
+```
