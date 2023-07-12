@@ -998,3 +998,52 @@ public interface MemberRepository extends JpaRepository<Member, Long>, CustomMem
     List<Member> findByUsername(String username);
 }
 ```
+
+### 스프링 데이터 페이징 활용
+* 스프링 데이터의 `Page`, `Pageable` 활용
+  * 주의: `fetchResults`, `fetchCount` 메서드가 `deprecated` 됨
+* count 쿼리 생략 가능
+  * 시작 페이지이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때
+  * 마지막 페이지일 때 (offset과 컨텐츠 사이즈를 더해 전체 사이즈 계산)
+
+```
+### CustomMemberRepository
+public interface CustomMemberRepository {
+    List<MemberTeamDto> search(MemberSearchCondition condition);
+    Page<MemberTeamDto> searchPageSimple(MemberSearchCondition condition, Pageable pageable);
+    Page<MemberTeamDto> searchPageComplex(MemberSearchCondition condition, Pageable pageable);
+}
+
+### searchPageSimple
+@Override
+public Page<MemberTeamDto> searchPageSimple(MemberSearchCondition condition, Pageable pageable) {
+    final List<MemberTeamDto> results = fetchMemberTeamDtosQuery(condition, pageable);
+
+    return new PageImpl<>(results, pageable, results.size());
+}
+
+### searchPageComplex
+@Override
+public Page<MemberTeamDto> searchPageComplex(MemberSearchCondition condition, Pageable pageable) {
+    final List<MemberTeamDto> results = fetchMemberTeamDtosQuery(condition, pageable);
+
+    final JPAQuery<Long> countQuery = queryFactory
+        .select(member.count())
+        .from(member)
+        .leftJoin(member.team, team)
+        .where(
+            usernameEq(condition.getUsername()),
+            teamNameEq(condition.getTeamName()),
+            ageGoe(condition.getAgeGoe()),
+            ageLoe(condition.getAgeLoe())
+        );
+
+    // 위에 작성한 count 쿼리 생략 가능 기준에 해당하지 않을 때만 카운트 쿼리가 호출됨
+    return PageableExecutionUtils.getPage(results, pageable, countQuery::fetchOne);
+}
+
+### fetchMemberTeamDtosQuery
+private List<MemberTeamDto> fetchMemberTeamDtosQuery(MemberSearchCondition condition, Pageable pageable) {
+    // 생략
+}
+```
