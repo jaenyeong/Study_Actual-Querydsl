@@ -934,3 +934,67 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findByUsername(String username);
 }
 ```
+
+### 사용자 정의 리포지터리
+* 사용자 정의 리포지터리 인터페이스를 선언하고 이를 구현하는 사용자 정의 리포지터리를 구현
+* 선언한 사용자 정의 리포지터리 인터페이스를 JPA 리포지터리 인터페이스에서 상속하여 사용
+* 이때 사용자 정의 리포지터리 구현 클래스의 네이밍 컨벤션을 맞춰야 함
+  * `${사용자 정의 리포지터리 인터페이스명} + Impl`
+
+```
+### CustomMemberRepository (사용자 정의 리포지터리 인터페이스 선언)
+public interface CustomMemberRepository {
+    List<MemberTeamDto> search(MemberSearchCondition condition);
+}
+
+### CustomMemberRepositoryImpl (사용자 정의 리포지터리 인터페이스의 구현 클래스)
+public class CustomMemberRepositoryImpl implements CustomMemberRepository {
+    private final JPAQueryFactory queryFactory;
+
+    public CustomMemberRepositoryImpl(EntityManager em) {
+        this.queryFactory = new JPAQueryFactory(em);
+    }
+
+    @Override
+    public List<MemberTeamDto> search(MemberSearchCondition condition) {
+        return queryFactory
+            .select(new QMemberTeamDto(
+                member.id,
+                member.username,
+                member.age,
+                team.id,
+                team.name
+            ))
+            .from(member)
+            .leftJoin(member.team, team)
+            .where(
+                usernameEq(condition.getUsername()),
+                teamNameEq(condition.getTeamName()),
+                ageGoe(condition.getAgeGoe()),
+                ageLoe(condition.getAgeLoe())
+            )
+            .fetch();
+    }
+
+    private BooleanExpression usernameEq(String username) {
+        return hasText(username) ? member.username.eq(username) : null;
+    }
+
+    private BooleanExpression teamNameEq(String teamName) {
+        return hasText(teamName) ? team.name.eq(teamName) : null;
+    }
+
+    private BooleanExpression ageGoe(Integer ageGoe) {
+        return ageGoe != null ? member.age.goe(ageGoe) : null;
+    }
+
+    private BooleanExpression ageLoe(Integer ageLoe) {
+        return ageLoe != null ? member.age.loe(ageLoe) : null;
+    }
+}
+
+### MemberRepository 인터페이스에서 CustomMemberRepository 인터페이스를 상속
+public interface MemberRepository extends JpaRepository<Member, Long>, CustomMemberRepository {
+    List<Member> findByUsername(String username);
+}
+```
