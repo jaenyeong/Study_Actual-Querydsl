@@ -924,3 +924,13 @@ public class InitMember {
     }
 }
 ```
+
+## 스프링 데이터 JPA와 Querydsl
+
+### 스프링 데이터 JPA 리포지터리로 변경
+
+```
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    List<Member> findByUsername(String username);
+}
+```
