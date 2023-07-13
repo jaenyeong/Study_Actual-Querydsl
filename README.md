@@ -1075,3 +1075,38 @@ final Iterable<Member> foundMembers = memberRepository.findAll(
   * 조건을 커스텀하는 기능이 복잡하고 직관적이지 않음
   * 컨트롤러가 Querydsl에 의존하게 됨
   * 이 기능도 복잡한 환경에서 사용하기엔 한계가 명확함
+
+### QuerydslRepositorySupport
+* Querydsl 라이브러리를 사용하여 저장소를 구현한 기본 클래스
+  * `from` 절부터 쿼리가 시작됨 (`QueryFactory`는 `select` 절부터 시작해서 더 직관적임)
+  * `getQuerydsl().applyPagination()`
+    * 스프링 데이터가 제공하는 페이징 기능을 Querydsl로 편리하게 변환 가능하지만 `Sort` 기능은 에러가 발생함
+  * `EntityManager` 제공
+* 한계점
+  * Querydsl 3버전을 기준으로 만들어진 객체
+  * 4버전을 기준으로 나온 JPAQueryFactory로 시작할 수가 없음
+  * `QueryFactory`를 제공하지 않음
+  * 위에서 언급했듯 `Sort` 기능이 정상적으로 동작하지 않을 수 있으니 주의할 것
+
+```
+public List<MemberTeamDto> searchBySupport(MemberSearchCondition condition) {
+    return from(member)
+        .leftJoin(member.team, team)
+        .where(
+            usernameEq(condition.getUsername()),
+            teamNameEq(condition.getTeamName()),
+            ageGoe(condition.getAgeGoe()),
+            ageLoe(condition.getAgeLoe())
+        )
+        .select(
+            new QMemberTeamDto(
+                member.id,
+                member.username,
+                member.age,
+                team.id,
+                team.name
+            )
+        )
+        .fetch();
+}
+```
