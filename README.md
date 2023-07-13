@@ -1047,3 +1047,24 @@ private List<MemberTeamDto> fetchMemberTeamDtosQuery(MemberSearchCondition condi
     // 생략
 }
 ```
+
+## 스프링 데이터 JPA가 제공하는 Querydsl 기능
+
+### `QuerydslPredicateExecutor` 인터페이스 제공
+* 상속하여 사용, `Pagable`, `Sort` 모두 지원
+* 한계점
+  * 조인이 안됨(묵시적 조인은 가능하지만 `left join`은 불가능)
+  * Querydsl이라는 구현 기술에 의존적인 형태가 됨
+  * 이외에도 복잡한 환경에서 사용하기엔 한계가 명확함
+
+```
+### MemberRepository
+public interface MemberRepository extends JpaRepository<Member, Long>, CustomMemberRepository, QuerydslPredicateExecutor<Member> {
+    List<Member> findByUsername(String username);
+}
+
+### MemberRepositoryTest
+final Iterable<Member> foundMembers = memberRepository.findAll(
+    member.age.between(22, 26)
+        .and(member.username.eq("member2")));
+```
