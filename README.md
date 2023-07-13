@@ -1068,3 +1068,10 @@ final Iterable<Member> foundMembers = memberRepository.findAll(
     member.age.between(22, 26)
         .and(member.username.eq("member2")));
 ```
+
+### Querydsl Web 지원
+* 한계점
+  * 단순한 조건만 사용 가능
+  * 조건을 커스텀하는 기능이 복잡하고 직관적이지 않음
+  * 컨트롤러가 Querydsl에 의존하게 됨
+  * 이 기능도 복잡한 환경에서 사용하기엔 한계가 명확함
